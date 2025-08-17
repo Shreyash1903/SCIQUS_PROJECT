@@ -1,16 +1,94 @@
-# Student Course Management System
+# 🎓 Student Course Management System (SCIQUS)
 
-A comprehensive web application for managing students, courses, and enrollments built with Django REST Framework (backend) and React (frontend).
+A comprehensive full-stack web application for managing students, courses, and enrollments built with **Django REST Framework** (backend) and **React** (frontend). This system provides role-based access control with separate interfaces for administrators and students.
 
-## 🎯 Features
+## 📸 Project Screenshots
 
-- **User Management**: Registration, authentication, and role-based access control
-- **Student Management**: Complete CRUD operations for student profiles
-- **Course Management**: Course creation, editing, and activation/deactivation
-- **Enrollment System**: Student-course enrollment with status tracking
-- **Dashboard**: Interactive dashboards for students and administrators
-- **Profile Management**: User profile updates and password changes
-- **Responsive Design**: Mobile-friendly interface with modern UI/UX
+![Login Page](Project%20Screenshots/Screenshot%202025-08-17%20133012.png)
+
+![Registration Page](Project%20Screenshots/Screenshot%202025-08-17%20133025.png)
+
+![Admin Dashboard](Project%20Screenshots/Screenshot%202025-08-17%20133037.png)
+
+![Admin Statistics](Project%20Screenshots/Screenshot%202025-08-17%20133050.png)
+
+![Admin Courses List](Project%20Screenshots/Screenshot%202025-08-17%20133102.png)
+
+![Add New Course](Project%20Screenshots/Screenshot%202025-08-17%20133107.png)
+
+![Course Details View](Project%20Screenshots/Screenshot%202025-08-17%20133121.png)
+
+![Edit Course](Project%20Screenshots/Screenshot%202025-08-17%20133204.png)
+
+![Students Overview](Project%20Screenshots/Screenshot%202025-08-17%20133213.png)
+
+![Student Profile](Project%20Screenshots/Screenshot%202025-08-17%20133233.png)
+
+![Student Information](Project%20Screenshots/Screenshot%202025-08-17%20133244.png)
+
+![Enrollment Tracking](Project%20Screenshots/Screenshot%202025-08-17%20133300.png)
+
+![Enrollment Details](Project%20Screenshots/Screenshot%202025-08-17%20133323.png)
+
+![Enrollment Reports](Project%20Screenshots/Screenshot%202025-08-17%20133337.png)
+
+![Student Dashboard](Project%20Screenshots/Screenshot%202025-08-17%20133404.png)
+
+![Dashboard Features](Project%20Screenshots/Screenshot%202025-08-17%20133424.png)
+
+![Available Courses](Project%20Screenshots/Screenshot%202025-08-17%20133448.png)
+
+![Course Information](Project%20Screenshots/Screenshot%202025-08-17%20133502.png)
+
+![Course Search](Project%20Screenshots/Screenshot%202025-08-17%20133515.png)
+
+![Course Enrollment](Project%20Screenshots/Screenshot%202025-08-17%20133544.png)
+
+![My Enrolled Courses](Project%20Screenshots/Screenshot%202025-08-17%20133627.png)
+
+![Course Progress](Project%20Screenshots/Screenshot%202025-08-17%20133642.png)
+
+![Student Profile](Project%20Screenshots/Screenshot%202025-08-17%20133655.png)
+
+![Profile Editing](Project%20Screenshots/Screenshot%202025-08-17%20133724.png)
+
+![Account Settings](Project%20Screenshots/Screenshot%202025-08-17%20133737.png)
+
+![Additional Features](Project%20Screenshots/Screenshot%202025-08-17%20133754.png)
+
+![System Navigation](Project%20Screenshots/Screenshot%202025-08-17%20133810.png)
+
+![Mobile Responsive Design](Project%20Screenshots/Screenshot%202025-08-17%20133836.png)
+
+## 🎯 Key Features
+
+### 👨‍💼 Admin Features
+
+- **📊 Dashboard Analytics**: Real-time system statistics and KPIs
+- **👥 Student Management**: Complete CRUD operations for student profiles
+- **📚 Course Management**: Course creation, editing, and activation/deactivation
+- **📝 Enrollment Tracking**: Monitor and manage student enrollments
+- **🔍 Advanced Search**: Powerful search and filtering across all entities
+- **📈 Reporting**: Comprehensive reports and analytics
+- **🔒 Role Management**: User role assignment and permission control
+
+### 🧑‍🎓 Student Features
+
+- **🎯 Personal Dashboard**: Customized dashboard with course progress
+- **📚 Course Catalog**: Browse and search available courses
+- **✅ Easy Enrollment**: Simple course enrollment process
+- **📋 My Courses**: View enrolled courses and progress
+- **👤 Profile Management**: Update personal information and settings
+- **🔔 Notifications**: Course updates and system notifications
+- **📱 Mobile Friendly**: Responsive design for all devices
+
+### 🔒 Security Features
+
+- **🔐 JWT Authentication**: Secure token-based authentication
+- **👥 Role-based Access**: Admin and student roles with appropriate permissions
+- **🛡️ Password Security**: Strong password requirements and validation
+- **🌐 CORS Protection**: Properly configured cross-origin requests
+- **✅ Input Validation**: Comprehensive data validation on both ends
 
 ## 🚀 Quick Start
 
@@ -27,424 +105,189 @@ A comprehensive web application for managing students, courses, and enrollments 
 
    ```bash
    git clone <repository-url>
-   cd student-course-management-system
+   cd SCIQUS-Project
    ```
 
-2. **Create and activate virtual environment**
+2. **Create virtual environment**
 
    ```bash
-   # Windows
    python -m venv .venv
-   .venv\Scripts\activate
-
-   # macOS/Linux
-   python3 -m venv .venv
-   source .venv/bin/activate
+   .venv\Scripts\activate  # Windows
+   # source .venv/bin/activate  # macOS/Linux
    ```
 
-3. **Install Python dependencies**
+3. **Install dependencies**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configure database**
+4. **Setup database**
 
    ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
 
-5. **Create superuser (optional)**
+5. **Create admin user**
 
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Load sample data** (creates demo users and courses)
-
-   ```bash
-   python manage.py shell -c "
-   from authentication.models import User
-   from students.models import Student
-   from courses.models import Course
-
-   # Create admin user
-   admin_user = User.objects.create_user(
-       username='admin',
-       email='admin@example.com',
-       password='admin123',
-       role='admin',
-       first_name='System',
-       last_name='Administrator',
-       phone='+1-555-0123'
-   )
-
-   # Create sample student
-   student_user = User.objects.create_user(
-       username='john_doe',
-       email='john.doe@example.com',
-       password='student123',
-       role='student',
-       first_name='John',
-       last_name='Doe',
-       phone='+1-555-0456'
-   )
-
-   student = Student.objects.create(
-       user=student_user,
-       student_number='STU202400001'
-   )
-
-   # Create sample courses
-   Course.objects.create(
-       course_code='CS101',
-       course_name='Introduction to Computer Science',
-       description='Fundamentals of computer science and programming.',
-       credits=3,
-       course_duration=4
-   )
-
-   Course.objects.create(
-       course_code='MATH201',
-       course_name='Calculus I',
-       description='Introduction to differential and integral calculus.',
-       credits=4,
-       course_duration=4
-   )
-
-   print('✅ Sample data created successfully!')
-   "
-   ```
-
-7. **Run the development server**
-
+6. **Run server**
    ```bash
    python manage.py runserver
    ```
-
-   The backend API will be available at `http://127.0.0.1:8000/`
+   Backend available at: `http://127.0.0.1:8000/`
 
 ### Frontend Setup (React)
 
-1. **Navigate to frontend directory**
+1. **Navigate to frontend**
 
    ```bash
    cd frontend
    ```
 
-2. **Install Node.js dependencies**
+2. **Install dependencies**
 
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. **Start the development server**
-
+3. **Start development server**
    ```bash
    npm start
-   # or
-   yarn start
    ```
+   Frontend available at: `http://localhost:3000/`
 
-   The frontend will be available at `http://localhost:3000/` (or another port if 3000 is busy)
+## 🔧 Default Credentials
 
-## 📚 Database Schema
+### Admin Access
 
-### Core Models
+- **Username**: `admin`
+- **Password**: `admin@1234`
+- **Access**: Full system administration
 
-#### User Model (authentication/models.py)
+### Student Access
 
-```python
-User (extends AbstractUser):
-  - id: AutoField (Primary Key)
-  - username: CharField(150) [Unique]
-  - email: EmailField [Unique]
-  - first_name: CharField(150)
-  - last_name: CharField(150)
-  - role: CharField(10) [Choices: 'admin', 'student']
-  - phone: CharField(15) [Optional]
-  - date_of_birth: DateField [Optional]
-  - address: TextField [Optional]
-  - profile_picture: ImageField [Optional]
-  - created_at: DateTimeField [Auto]
-  - updated_at: DateTimeField [Auto]
-```
+- **Username**: `john` (or create new student account)
+- **Password**: `John@1234`
+- **Access**: Course enrollment and profile management
 
-#### Student Model (students/models.py)
+## 🏗️ Technical Architecture
 
-```python
-Student:
-  - student_id: UUIDField (Primary Key)
-  - user: OneToOneField(User) [CASCADE]
-  - student_number: CharField(20) [Unique, Auto-generated]
-  - courses: ManyToManyField(Course) [Through Enrollment]
-  - enrollment_date: DateField [Default: today]
-  - status: CharField(20) [Choices: 'active', 'inactive', 'graduated', 'dropped']
-  - created_at: DateTimeField [Auto]
-  - updated_at: DateTimeField [Auto]
-```
+### Backend (Django REST Framework)
 
-#### Course Model (courses/models.py)
+- **Authentication**: Custom User model with JWT tokens
+- **API Design**: RESTful APIs with proper HTTP methods
+- **Database**: SQLite (development) / PostgreSQL (production)
+- **Security**: CORS, authentication middleware, input validation
 
-```python
-Course:
-  - course_id: UUIDField (Primary Key)
-  - course_code: CharField(20) [Unique]
-  - course_name: CharField(200)
-  - description: TextField [Optional]
-  - credits: PositiveIntegerField [Default: 3]
-  - course_duration: PositiveIntegerField [Default: 4, in months]
-  - is_active: BooleanField [Default: True]
-  - created_at: DateTimeField [Auto]
-  - updated_at: DateTimeField [Auto]
-```
+### Frontend (React)
 
-#### Enrollment Model (students/models.py)
+- **UI Framework**: React 18 with functional components
+- **Styling**: Tailwind CSS for responsive design
+- **State Management**: React Context API and hooks
+- **Routing**: React Router for navigation
+- **API Integration**: Axios for HTTP requests
 
-```python
-Enrollment:
-  - enrollment_id: UUIDField (Primary Key)
-  - student: ForeignKey(Student) [CASCADE]
-  - course: ForeignKey(Course) [CASCADE]
-  - enrollment_date: DateTimeField [Default: now]
-  - status: CharField(20) [Choices: 'enrolled', 'completed', 'withdrawn', 'failed', 'suspended']
-  - grade: CharField(3) [Optional, Choices: A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F, I, W]
-  - completion_date: DateTimeField [Optional]
-  - credits_earned: PositiveIntegerField [Optional]
-  - created_at: DateTimeField [Auto]
-  - updated_at: DateTimeField [Auto]
-  - unique_together: [student, course]
-```
+### Database Models
 
-### Database Relationships
+- **User**: Authentication and profile management
+- **Student**: Student-specific information and enrollment
+- **Course**: Course details and management
+- **Enrollment**: Student-course relationship tracking
 
-```
-User (1) ←→ (1) Student
-Student (M) ←→ (M) Course [Through: Enrollment]
-Student (1) ←→ (M) Enrollment
-Course (1) ←→ (M) Enrollment
-```
+## 📱 Responsive Design
+
+The application is fully responsive and works seamlessly across:
+
+- 💻 **Desktop**: Full-featured interface with advanced functionality
+- 📱 **Mobile**: Touch-optimized interface with intuitive navigation
+- 📟 **Tablet**: Adaptive layout that works on all screen sizes
 
 ## 🔌 API Endpoints
 
-### Authentication Endpoints
+### Authentication
 
 ```
-POST   /api/auth/register/           # User registration
-POST   /api/auth/login/              # User login
-POST   /api/auth/logout/             # User logout
-GET    /api/auth/profile/            # Get user profile
-PUT    /api/auth/profile/            # Update user profile
-POST   /api/auth/change-password/    # Change password
-POST   /api/auth/token/refresh/      # Refresh JWT token
-GET    /api/auth/users/              # List users (admin only)
+POST /api/auth/login/          # User login
+POST /api/auth/register/       # User registration
+POST /api/auth/logout/         # User logout
+GET  /api/auth/profile/        # Get user profile
+PUT  /api/auth/profile/        # Update profile
 ```
 
-### Student Endpoints
+### Courses
 
 ```
-GET    /api/students/                # List students
-POST   /api/students/                # Create student
-GET    /api/students/{id}/           # Get student details
-PUT    /api/students/{id}/           # Update student
-DELETE /api/students/{id}/           # Delete student
-GET    /api/students/profile/        # Get current student profile
-POST   /api/students/{id}/enroll/    # Enroll in course
-POST   /api/students/{id}/unenroll/  # Unenroll from course
+GET    /api/courses/           # List courses
+POST   /api/courses/           # Create course (admin)
+GET    /api/courses/{id}/      # Course details
+PUT    /api/courses/{id}/      # Update course (admin)
+DELETE /api/courses/{id}/      # Delete course (admin)
 ```
 
-### Course Endpoints
+### Students
 
 ```
-GET    /api/courses/                 # List courses
-POST   /api/courses/                 # Create course
-GET    /api/courses/{id}/            # Get course details
-PUT    /api/courses/{id}/            # Update course
-DELETE /api/courses/{id}/            # Delete course
-GET    /api/courses/{id}/students/   # Get enrolled students
+GET  /api/students/            # List students (admin)
+POST /api/students/            # Create student (admin)
+GET  /api/students/profile/    # Get student profile
+PUT  /api/students/profile/    # Update student profile
+POST /api/courses/{id}/enroll/ # Enroll in course
 ```
-
-## 🛠 Custom Management Commands
-
-### Database Operations
-
-```bash
-# Create sample data
-python manage.py shell -c "exec(open('scripts/create_sample_data.py').read())"
-
-# Reset student passwords
-python manage.py shell -c "
-from authentication.models import User
-user = User.objects.get(username='username')
-user.set_password('new_password')
-user.save()
-"
-
-# Generate student numbers
-python manage.py shell -c "
-from students.models import Student
-for student in Student.objects.filter(student_number=''):
-    student.save()  # Auto-generates student number
-"
-```
-
-### Data Migration Scripts
-
-```bash
-# Export students to CSV
-python manage.py shell -c "
-import csv
-from students.models import Student
-with open('students_export.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(['Student Number', 'Full Name', 'Email', 'Status'])
-    for student in Student.objects.all():
-        writer.writerow([student.student_number, student.full_name, student.email, student.status])
-"
-```
-
-## 🏗 Project Structure
-
-```
-student-course-management/
-├── authentication/                 # User authentication app
-│   ├── models.py                  # User model
-│   ├── serializers.py             # API serializers
-│   ├── views.py                   # API views
-│   └── urls.py                    # URL routing
-├── students/                      # Student management app
-│   ├── models.py                  # Student and Enrollment models
-│   ├── serializers.py             # API serializers
-│   ├── views.py                   # API views
-│   └── urls.py                    # URL routing
-├── courses/                       # Course management app
-│   ├── models.py                  # Course model
-│   ├── serializers.py             # API serializers
-│   ├── views.py                   # API views
-│   └── urls.py                    # URL routing
-├── student_course_management/     # Main Django project
-│   ├── settings.py                # Project settings
-│   ├── urls.py                    # Main URL configuration
-│   └── wsgi.py                    # WSGI configuration
-├── frontend/                      # React frontend
-│   ├── src/
-│   │   ├── components/            # Reusable components
-│   │   ├── pages/                 # Page components
-│   │   ├── services/              # API services
-│   │   └── context/               # React context
-│   ├── public/                    # Static files
-│   └── package.json               # Node dependencies
-├── requirements.txt               # Python dependencies
-└── manage.py                      # Django management script
-```
-
-## 🔒 Security Features
-
-- **JWT Authentication**: Secure token-based authentication
-- **Role-based Access Control**: Admin and student roles with appropriate permissions
-- **Password Validation**: Strong password requirements
-- **CORS Configuration**: Properly configured cross-origin requests
-- **Input Validation**: Comprehensive data validation on both frontend and backend
-- **SQL Injection Protection**: Django ORM provides built-in protection
 
 ## 🧪 Testing
 
-### Running Tests
+### Backend Testing
 
 ```bash
-# Run all tests
 python manage.py test
-
-# Run specific app tests
-python manage.py test authentication
-python manage.py test students
-python manage.py test courses
-
-# Run with coverage
-pip install coverage
-coverage run --source='.' manage.py test
-coverage report
 ```
 
-### Frontend Tests
+### Frontend Testing
 
 ```bash
 cd frontend
 npm test
 ```
 
-## 📝 Sample Data Structure
+## 📈 Future Enhancements
 
-### Default Users
-
-- **Admin**: `username: admin`, `password: admin123`
-- **Student**: `username: john_doe`, `password: student123`
-
-### Sample Courses
-
-- **CS101**: Introduction to Computer Science (3 credits)
-- **MATH201**: Calculus I (4 credits)
-- **ENG101**: English Composition (3 credits)
-
-## 🚀 Deployment
-
-### Production Setup
-
-1. **Environment Variables**
-
-   ```bash
-   DEBUG=False
-   SECRET_KEY=your-production-secret-key
-   DATABASE_URL=your-database-url
-   ALLOWED_HOSTS=your-domain.com
-   ```
-
-2. **Static Files**
-
-   ```bash
-   python manage.py collectstatic
-   ```
-
-3. **Database Migration**
-   ```bash
-   python manage.py migrate
-   ```
-
-### Docker Deployment (Optional)
-
-```dockerfile
-# Dockerfile example
-FROM python:3.9
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-```
+- 📧 Email notifications for enrollment updates
+- 📊 Advanced analytics and reporting dashboard
+- 💬 Real-time chat support system
+- 📱 Mobile app for iOS and Android
+- 🎥 Video course content integration
+- 📝 Assignment and grading system
+- 🔔 Push notifications
+- 📤 Bulk data import/export features
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📞 Support
-
-For support or questions:
-
-- Create an issue on GitHub
-- Check the API documentation at `/api/` endpoint
-- Review the Django admin panel at `/admin/`
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support
+
+For support, questions, or feature requests:
+
+- 🐛 Create an issue on GitHub
+- 📧 Email: support@sciqus.com
+- 📖 Check the API documentation at `/api/`
+- 🔧 Review Django admin panel at `/admin/`
 
 ---
 
-**Happy Coding! 🎓**
+**Made with ❤️ for educational excellence**
+
+_SCIQUS - Student Course Intelligence & Quality University System_

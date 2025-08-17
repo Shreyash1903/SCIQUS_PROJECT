@@ -1,12 +1,38 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 from .models import User
+
+
+class UserForm(ModelForm):
+    """Custom form for User model with validation"""
+    class Meta:
+        model = User
+        fields = '__all__'
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+
+        # Check if trying to create/change to admin when one already exists
+        if role == 'admin':
+            existing_admin = User.objects.filter(role='admin').first()
+            # Allow editing the existing admin, but not creating a new one
+            if existing_admin and (not self.instance.pk or self.instance.pk != existing_admin.pk):
+                raise ValidationError(
+                    f"An admin account already exists (username: {existing_admin.username}). "
+                    "Only one admin is allowed in the system."
+                )
+
+        return role
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Admin configuration for custom User model"""
+
+    form = UserForm  # Use our custom form with validation
 
     list_display = ('username', 'email', 'first_name', 'last_name',
                     'role', 'is_staff', 'is_active', 'date_joined')

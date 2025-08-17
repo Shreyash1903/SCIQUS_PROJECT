@@ -20,6 +20,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = attrs.get('password')
         password_confirm = attrs.get(
             'password_confirm') or attrs.get('confirmPassword')
+        role = attrs.get('role')
 
         if not password_confirm:
             raise serializers.ValidationError(
@@ -28,12 +29,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         if password != password_confirm:
             raise serializers.ValidationError(
                 {"password_confirm": "Passwords don't match"})
+
+        # Check if trying to create admin when one already exists
+        if role == 'admin':
+            existing_admin = User.objects.filter(role='admin').first()
+            if existing_admin:
+                raise serializers.ValidationError(
+                    {"role": f"An admin account already exists (username: {existing_admin.username}). Only one admin is allowed in the system."})
+
         return attrs
 
     def create(self, validated_data):
         validated_data.pop('password_confirm', None)
         validated_data.pop('confirmPassword', None)
         user = User.objects.create_user(**validated_data)
+
+        # Set Django admin permissions for admin users
+        if validated_data.get('role') == 'admin':
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+
         return user
 
 

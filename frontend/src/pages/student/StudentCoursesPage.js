@@ -20,17 +20,12 @@ import {
 
 const StudentCoursesPage = () => {
   const { user } = useAuth();
+
+  // Simple state management like AdminEnrolledStudentsPage
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    is_active: "true", // Only show active courses for students by default
-  });
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-  });
+  const [selectedFilter, setSelectedFilter] = useState(""); // For course duration or credits filter
 
   // Student enrollment states
   const [enrolling, setEnrolling] = useState(null);
@@ -38,11 +33,30 @@ const StudentCoursesPage = () => {
   const [studentProfile, setStudentProfile] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
 
+  // Stats
+  const [totalCourses, setTotalCourses] = useState(0);
+
   useEffect(() => {
     console.log("🚀 StudentCoursesPage mounted - Current user:", user);
     fetchCourses();
     fetchStudentProfile();
-  }, [searchTerm, filters, pagination.currentPage]);
+  }, [user]);
+
+  // Simple fetch courses function like AdminEnrolledStudentsPage
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await coursesAPI.list({ is_active: true }); // Only active courses for students
+      const coursesData = response.data.results || response.data || [];
+      setCourses(coursesData);
+      setTotalCourses(coursesData.length);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchStudentProfile = async () => {
     try {
@@ -82,8 +96,7 @@ const StudentCoursesPage = () => {
 
       setEnrollmentSuccess(courseId);
 
-      // Refresh courses and student profile
-      fetchCourses();
+      // Refresh student profile to update enrolled courses
       fetchStudentProfile();
 
       // Hide success message after 3 seconds
@@ -108,42 +121,6 @@ const StudentCoursesPage = () => {
     }
   };
 
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const params = {
-        page: pagination.currentPage,
-        search: searchTerm,
-      };
-
-      // Only add filters that have actual values
-      Object.keys(filters).forEach((key) => {
-        if (filters[key] && filters[key] !== "") {
-          params[key] = filters[key];
-        }
-      });
-
-      console.log("🔍 Fetching courses with params:", params);
-      const response = await coursesAPI.list(params);
-      console.log("📊 Courses API Response:", response.data);
-
-      setCourses(response.data.results || response.data || []);
-
-      if (response.data.count !== undefined) {
-        setPagination((prev) => ({
-          ...prev,
-          totalCount: response.data.count,
-          totalPages: Math.ceil(response.data.count / 10),
-        }));
-      }
-    } catch (error) {
-      console.error("❌ Error fetching courses:", error);
-      setCourses([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Function to format course description
   const formatCourseText = (text) => {
     if (!text) return [];
@@ -162,9 +139,32 @@ const StudentCoursesPage = () => {
       (course) => course.course_id === courseId || course.id === courseId
     );
     console.log(`🔍 Checking enrollment for course ${courseId}:`, isEnrolled);
-    console.log("📚 Current enrolled courses:", enrolledCourses);
     return isEnrolled;
   };
+
+  // Simple filter logic extracted from AdminEnrolledStudentsPage
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      course.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (course.description &&
+        course.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesFilter =
+      selectedFilter === "" ||
+      (selectedFilter === "high_credits" && (course.credits || 0) >= 4) ||
+      (selectedFilter === "low_credits" && (course.credits || 0) < 4) ||
+      (selectedFilter === "short_duration" &&
+        (course.course_duration || 0) <= 3) ||
+      (selectedFilter === "long_duration" && (course.course_duration || 0) > 3);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  const totalResults = filteredCourses.length;
+  const hasActiveSearch = searchTerm !== "" || selectedFilter !== "";
+  const isEmpty = filteredCourses.length === 0;
 
   if (loading) {
     return (
@@ -199,8 +199,8 @@ const StudentCoursesPage = () => {
                       Discover Courses
                     </h1>
                     <p className="text-blue-100 text-lg mt-1">
-                      Explore {pagination.totalCount} amazing courses and
-                      advance your skills
+                      Explore {totalResults} amazing courses and advance your
+                      skills
                     </p>
                   </div>
                 </div>
@@ -247,78 +247,114 @@ const StudentCoursesPage = () => {
           </div>
         )}
 
-        {/* Enhanced Search and Filter Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Search courses by name, code, description, or instructor..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-2">
-                <Filter className="h-5 w-5 text-gray-500" />
-                <select
-                  value={filters.is_active}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      is_active: e.target.value,
-                    }))
-                  }
-                  className="bg-transparent border-none focus:ring-0 text-gray-700 font-medium cursor-pointer"
-                >
-                  <option value="true">Available Courses</option>
-                  <option value="">All Courses</option>
-                </select>
-              </div>
-
-              {(searchTerm || filters.is_active !== "true") && (
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilters({ is_active: "true" });
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
-                >
-                  <X className="h-4 w-4 group-hover:rotate-90 transition-transform duration-200" />
-                  <span className="font-medium">Clear</span>
-                </button>
+        {/* Enhanced Search and Filter Section - Simple like AdminEnrolledStudentsPage */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+              <input
+                type="text"
+                placeholder="Search by course name, code, or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+              />
+              {loading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                </div>
               )}
             </div>
+
+            {/* Filter Dropdown */}
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white text-sm sm:text-base"
+              >
+                <option value="">All Courses</option>
+                <option value="high_credits">High Credits (4+)</option>
+                <option value="low_credits">Low Credits (&lt;4)</option>
+                <option value="short_duration">
+                  Short Duration (≤3 months)
+                </option>
+                <option value="long_duration">
+                  Long Duration (&gt;3 months)
+                </option>
+              </select>
+            </div>
           </div>
+
+          {/* Clear Filters */}
+          {hasActiveSearch && (
+            <div className="mt-4 flex justify-center sm:justify-end">
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedFilter("");
+                }}
+                className="flex items-center space-x-2 px-4 py-2 text-sm sm:text-base text-gray-600 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200"
+              >
+                <X className="h-4 w-4" />
+                <span>Clear Filters</span>
+              </button>
+            </div>
+          )}
         </div>
 
+        {/* Show search results info */}
+        {hasActiveSearch && !isEmpty && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-center space-x-2">
+              <Search className="h-5 w-5 text-blue-600" />
+              <p className="text-blue-800 font-medium">
+                Found {totalResults} course{totalResults !== 1 ? "s" : ""}{" "}
+                matching your search
+                {searchTerm && (
+                  <span className="font-normal"> for "{searchTerm}"</span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Courses Grid */}
-        {courses.length === 0 ? (
+        {isEmpty ? (
           <div className="bg-white rounded-2xl shadow-xl p-16 text-center border border-gray-100">
             <div className="max-w-md mx-auto">
               <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <BookOpen className="h-12 w-12 text-blue-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {searchTerm || filters.is_active !== "true"
+                {hasActiveSearch
                   ? "No Matching Courses"
                   : "No Courses Available"}
               </h3>
               <p className="text-gray-600 mb-8 leading-relaxed">
-                {searchTerm || filters.is_active !== "true"
+                {hasActiveSearch
                   ? "Try adjusting your search criteria or browse all courses"
                   : "Check back later for new course offerings"}
               </p>
+              {hasActiveSearch && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedFilter("");
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Search
+                </button>
+              )}
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {courses.map((course) => {
+            {filteredCourses.map((course) => {
               const isEnrolled = isEnrolledInCourse(
                 course.course_id || course.id
               );
@@ -528,96 +564,22 @@ const StudentCoursesPage = () => {
           </div>
         )}
 
-        {/* Enhanced Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-              <div className="text-sm text-gray-600 flex items-center space-x-2">
-                <Eye className="h-4 w-4" />
-                <span>
-                  Showing{" "}
-                  <span className="font-semibold text-gray-900">
-                    {(pagination.currentPage - 1) * 10 + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-semibold text-gray-900">
-                    {Math.min(
-                      pagination.currentPage * 10,
-                      pagination.totalCount
-                    )}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-gray-900">
-                    {pagination.totalCount}
-                  </span>{" "}
-                  courses
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      currentPage: prev.currentPage - 1,
-                    }))
-                  }
-                  disabled={pagination.currentPage === 1}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  Previous
-                </button>
-
-                <div className="flex items-center space-x-1">
-                  {[...Array(Math.min(5, pagination.totalPages))].map(
-                    (_, index) => {
-                      const pageNum = Math.max(
-                        1,
-                        Math.min(
-                          pagination.currentPage - 2 + index,
-                          pagination.totalPages - 4 + index
-                        )
-                      );
-                      if (pageNum > pagination.totalPages) return null;
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() =>
-                            setPagination((prev) => ({
-                              ...prev,
-                              currentPage: pageNum,
-                            }))
-                          }
-                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                            pagination.currentPage === pageNum
-                              ? "bg-blue-600 text-white shadow-md"
-                              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-
-                <button
-                  onClick={() =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      currentPage: prev.currentPage + 1,
-                    }))
-                  }
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+        {/* Simple Results Summary - No Pagination Needed */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 text-center">
+          <div className="text-sm text-gray-600 flex items-center justify-center space-x-2">
+            <Eye className="h-4 w-4" />
+            <span>
+              Showing{" "}
+              <span className="font-semibold text-gray-900">
+                {totalResults}
+              </span>{" "}
+              courses
+              {hasActiveSearch && searchTerm && (
+                <span className="font-normal"> for "{searchTerm}"</span>
+              )}
+            </span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
