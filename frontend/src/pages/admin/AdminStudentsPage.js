@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { studentsAPI, coursesAPI } from "../../services/api";
 import {
@@ -19,6 +19,7 @@ import {
 const AdminStudentsPage = () => {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]); // Store all students for client-side filtering
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,32 +28,73 @@ const AdminStudentsPage = () => {
   const [modalType, setModalType] = useState("create");
   const [filters, setFilters] = useState({
     status: "",
-    course: "",
   });
 
-  useEffect(() => {
-    fetchStudents();
-    fetchCourses();
-  }, [searchTerm, filters]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {
-        search: searchTerm,
-        ...filters,
-      };
 
-      console.log("🔍 Fetching students with params:", params);
-      const response = await studentsAPI.list(params);
+      // Fetch all students at once for client-side filtering
+      console.log("🔍 Fetching all students for client-side filtering");
+      const response = await studentsAPI.list({});
       console.log("📊 Students API Response:", response.data);
 
-      setStudents(response.data.results || response.data || []);
+      const studentsData = response.data.results || response.data || [];
+      setAllStudents(studentsData); // Store all students
+
+      // Apply filtering on client-side
+      applyFilters(studentsData, searchTerm, filters);
     } catch (error) {
       console.error("❌ Error fetching students:", error);
     } finally {
       setLoading(false);
     }
+  }, []); // Remove dependencies to fetch only once
+
+  // Client-side filtering function
+  const applyFilters = useCallback((studentsData, search, activeFilters) => {
+    let filteredStudents = studentsData;
+
+    // Apply search filter
+    if (search && search.trim() !== "") {
+      const searchLower = search.toLowerCase();
+      filteredStudents = filteredStudents.filter(
+        (student) =>
+          student.full_name?.toLowerCase().includes(searchLower) ||
+          student.student_number?.toLowerCase().includes(searchLower) ||
+          student.user_details?.first_name
+            ?.toLowerCase()
+            .includes(searchLower) ||
+          student.user_details?.last_name
+            ?.toLowerCase()
+            .includes(searchLower) ||
+          student.user_details?.email?.toLowerCase().includes(searchLower) ||
+          student.email?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply status filter
+    if (activeFilters.status && activeFilters.status !== "") {
+      filteredStudents = filteredStudents.filter(
+        (student) => student.status === activeFilters.status
+      );
+    }
+
+    setStudents(filteredStudents);
+  }, []);
+
+  // Handle search change - immediate filtering
+  const handleSearchChange = (e) => {
+    const newSearchTerm = e.target.value;
+    setSearchTerm(newSearchTerm);
+    applyFilters(allStudents, newSearchTerm, filters);
+  };
+
+  // Handle filter change - immediate filtering
+  const handleFilterChange = (filterKey, value) => {
+    const newFilters = { ...filters, [filterKey]: value };
+    setFilters(newFilters);
+    applyFilters(allStudents, searchTerm, newFilters);
   };
 
   const fetchCourses = async () => {
@@ -63,6 +105,15 @@ const AdminStudentsPage = () => {
       console.error("Error fetching courses:", error);
     }
   };
+
+  // useEffect for initial data loading and when dependencies change
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   const handleCreateStudent = () => {
     setModalType("create");
@@ -86,6 +137,12 @@ const AdminStudentsPage = () => {
     setModalType("delete");
     setSelectedStudent(student);
     setShowModal(true);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilters({ status: "" });
+    applyFilters(allStudents, "", { status: "" });
   };
 
   if (loading) {
@@ -151,7 +208,7 @@ const AdminStudentsPage = () => {
                 type="text"
                 placeholder="Search students..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm"
               />
             </div>
@@ -159,32 +216,12 @@ const AdminStudentsPage = () => {
             {/* Status Filter */}
             <select
               value={filters.status}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, status: e.target.value }))
-              }
+              onChange={(e) => handleFilterChange("status", e.target.value)}
               className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-gray-900 bg-white shadow-sm"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="graduated">Graduated</option>
-              <option value="suspended">Suspended</option>
-            </select>
-
-            {/* Course Filter */}
-            <select
-              value={filters.course}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, course: e.target.value }))
-              }
-              className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-gray-900 bg-white shadow-sm"
-            >
-              <option value="">All Courses</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.name || course.course_name}
-                </option>
-              ))}
             </select>
           </div>
         </div>
@@ -203,7 +240,7 @@ const AdminStudentsPage = () => {
                   No students found
                 </h3>
                 <p className="text-sm text-gray-500 max-w-sm mx-auto px-4">
-                  {searchTerm || filters.status || filters.course
+                  {searchTerm || filters.status
                     ? "Try adjusting your search or filter criteria"
                     : "Get started by creating your first student"}
                 </p>
@@ -431,7 +468,6 @@ const StudentModal = ({
       student?.user?.last_name || student?.user_details?.last_name || "",
     password: "",
     confirm_password: "",
-    phone_number: student?.phone_number || "",
     course:
       student?.course?.course_id || student?.course_details?.course_id || "",
   });
@@ -452,7 +488,6 @@ const StudentModal = ({
           student?.user?.last_name || student?.user_details?.last_name || "",
         password: "",
         confirm_password: "",
-        phone_number: student?.phone_number || "",
         course:
           student?.course?.course_id ||
           student?.course_details?.course_id ||
@@ -1206,45 +1241,6 @@ const StudentModal = ({
               Student Information
             </h4>
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <span className="flex items-center">
-                    <svg
-                      className="h-4 w-4 mr-1 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                    Phone Number
-                  </span>
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone_number}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      phone_number: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm"
-                  placeholder="+919123456789"
-                />
-                {errors.phone_number && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    {errors.phone_number}
-                  </p>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <span className="flex items-center">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { coursesAPI } from "../../services/api";
 import {
@@ -23,8 +23,9 @@ import {
 } from "lucide-react";
 
 const AdminCoursesPage = () => {
-  const { user } = useAuth();
+  useAuth();
   const [courses, setCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]); // Store all courses for client-side filtering
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -39,56 +40,115 @@ const AdminCoursesPage = () => {
     totalCount: 0,
   });
 
-  useEffect(() => {
-    console.log("🚀 AdminCoursesPage mounted - Current user:", user);
-    fetchCourses();
-  }, [searchTerm, filters, pagination.currentPage]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {
-        page: pagination.currentPage,
-        search: searchTerm,
-      };
 
-      // Only add filters that have actual values
-      Object.keys(filters).forEach((key) => {
-        if (filters[key] && filters[key] !== "") {
-          params[key] = filters[key];
-        }
-      });
-
-      console.log("🔍 Fetching courses with params:", params);
-      const response = await coursesAPI.list(params);
+      // Fetch all courses at once for client-side filtering
+      console.log("🔍 Fetching all courses for client-side filtering");
+      const response = await coursesAPI.list({});
       console.log("📊 Courses API Response:", response.data);
-      console.log(
-        "📋 First course data structure:",
-        response.data.results?.[0]
-      );
-      console.log(
-        "🔢 Number of courses received:",
-        response.data.results?.length || 0
-      );
-      console.log("👤 Current user role:", user?.role);
-      console.log("🏷️ Is staff:", user?.is_staff);
-      console.log("📦 Raw response data:", response.data);
 
-      setCourses(response.data.results || response.data || []);
+      const coursesData = response.data.results || response.data || [];
+      setAllCourses(coursesData); // Store all courses
 
-      if (response.data.count !== undefined) {
-        setPagination((prev) => ({
-          ...prev,
-          totalCount: response.data.count,
-          totalPages: Math.ceil(response.data.count / 10),
-        }));
-      }
+      // Apply filtering and pagination on client-side
+      applyFiltersAndPagination(
+        coursesData,
+        searchTerm,
+        filters,
+        pagination.currentPage
+      );
     } catch (error) {
       console.error("❌ Error fetching courses:", error);
+      console.error("Error details:", error.response?.data);
       setCourses([]);
+      setAllCourses([]);
     } finally {
       setLoading(false);
     }
+  }, []); // Remove dependencies to fetch only once
+
+  // Client-side filtering and pagination function
+  const applyFiltersAndPagination = useCallback(
+    (coursesData, search, activeFilters, currentPage) => {
+      let filteredCourses = coursesData;
+
+      // Apply search filter
+      if (search && search.trim() !== "") {
+        const searchLower = search.toLowerCase();
+        filteredCourses = filteredCourses.filter(
+          (course) =>
+            course.course_name?.toLowerCase().includes(searchLower) ||
+            course.course_code?.toLowerCase().includes(searchLower) ||
+            course.description?.toLowerCase().includes(searchLower) ||
+            course.instructor_name?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Apply status filter
+      if (activeFilters.is_active && activeFilters.is_active !== "") {
+        const isActiveFilter = activeFilters.is_active === "true";
+        filteredCourses = filteredCourses.filter(
+          (course) => course.is_active === isActiveFilter
+        );
+      }
+
+      // Update pagination info
+      const itemsPerPage = 10;
+      const totalCount = filteredCourses.length;
+      const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+      setPagination((prev) => ({
+        ...prev,
+        totalCount,
+        totalPages,
+      }));
+
+      // Apply pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedCourses = filteredCourses.slice(
+        startIndex,
+        startIndex + itemsPerPage
+      );
+
+      setCourses(paginatedCourses);
+    },
+    []
+  );
+
+  // Handle search change - immediate filtering
+  const handleSearchChange = (e) => {
+    const newSearchTerm = e.target.value;
+    setSearchTerm(newSearchTerm);
+    setPagination((prev) => ({ ...prev, currentPage: 1 })); // Reset to first page
+    applyFiltersAndPagination(allCourses, newSearchTerm, filters, 1);
+  };
+
+  // Handle filter change - immediate filtering
+  const handleFilterChange = (filterKey, value) => {
+    const newFilters = { ...filters, [filterKey]: value };
+    setFilters(newFilters);
+    setPagination((prev) => ({ ...prev, currentPage: 1 })); // Reset to first page
+    applyFiltersAndPagination(allCourses, searchTerm, newFilters, 1);
+  };
+
+  // Handle pagination change
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+    applyFiltersAndPagination(allCourses, searchTerm, filters, newPage);
+  };
+
+  // Single useEffect for initial data loading
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilters({ is_active: "" });
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    applyFiltersAndPagination(allCourses, "", { is_active: "" }, 1);
   };
 
   const handleCreateCourse = () => {
@@ -182,14 +242,21 @@ const AdminCoursesPage = () => {
           <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:gap-6">
             <div className="flex-1">
               <div className="relative group">
-                <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5 group-focus-within:text-blue-500 transition-colors" />
+                <Search
+                  className={`absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 transition-colors ${
+                    loading
+                      ? "animate-pulse text-blue-500"
+                      : "text-gray-400 group-focus-within:text-blue-500"
+                  }`}
+                />
                 <input
                   type="text"
-                  placeholder="Search courses..."
+                  placeholder="Search courses by name, code, or description..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm text-sm sm:text-base"
                 />
+                {/* Search indicator - removed debouncing indicator since it's instant now */}
               </div>
             </div>
 
@@ -199,10 +266,7 @@ const AdminCoursesPage = () => {
                 <select
                   value={filters.is_active}
                   onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      is_active: e.target.value,
-                    }))
+                    handleFilterChange("is_active", e.target.value)
                   }
                   className="bg-transparent border-none focus:ring-0 text-gray-700 font-medium cursor-pointer text-sm sm:text-base"
                 >
@@ -214,10 +278,7 @@ const AdminCoursesPage = () => {
 
               {(searchTerm || filters.is_active) && (
                 <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilters({ is_active: "" });
-                  }}
+                  onClick={clearFilters}
                   className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
                 >
                   <X className="h-4 w-4 group-hover:rotate-90 transition-transform duration-200" />
@@ -239,20 +300,34 @@ const AdminCoursesPage = () => {
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
                 {searchTerm || filters.is_active
-                  ? "No Matching Courses"
+                  ? "No Matching Courses Found"
                   : "No Courses Available"}
               </h3>
               <p className="text-gray-600 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
                 {searchTerm || filters.is_active
-                  ? "Try adjusting your search criteria or browse all courses"
+                  ? `No courses match your search criteria${
+                      searchTerm ? ` "${searchTerm}"` : ""
+                    }. Try adjusting your search or browse all courses.`
                   : "Get started by creating your first course to build your academic catalog"}
               </p>
+              {searchTerm || filters.is_active ? (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm sm:text-base mr-4"
+                >
+                  <X className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Clear Filters
+                </button>
+              ) : null}
               <button
                 onClick={handleCreateCourse}
                 className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm sm:text-base"
               >
                 <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                Create Your First Course
+                Create{" "}
+                {searchTerm || filters.is_active
+                  ? "New Course"
+                  : "Your First Course"}
               </button>
             </div>
           </div>

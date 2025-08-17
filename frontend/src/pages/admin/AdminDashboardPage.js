@@ -775,7 +775,6 @@ const StudentModal = ({ type, student, courses, onClose, onSuccess }) => {
       student?.user?.last_name || student?.user_details?.last_name || "",
     password: "",
     confirm_password: "",
-    phone_number: student?.phone_number || "",
     course:
       student?.course?.course_id || student?.course_details?.course_id || "",
   });
@@ -1033,29 +1032,6 @@ const StudentModal = ({ type, student, courses, onClose, onSuccess }) => {
               Student Information
             </h4>
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone_number}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      phone_number: e.target.value,
-                    }))
-                  }
-                  className="input-field"
-                  placeholder="+919123456789"
-                />
-                {errors.phone_number && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.phone_number}
-                  </p>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Course (Optional)

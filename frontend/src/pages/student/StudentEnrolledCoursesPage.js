@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { studentsAPI, coursesAPI } from "../../services/api";
 import {
   BookOpen,
@@ -14,6 +15,7 @@ import {
 
 const StudentEnrolledCoursesPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +99,7 @@ const StudentEnrolledCoursesPage = () => {
               to get started.
             </p>
             <button
-              onClick={() => (window.location.href = "/courses")}
+              onClick={() => navigate("/student/courses")}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
@@ -254,7 +256,7 @@ const StudentEnrolledCoursesPage = () => {
       {enrolledCourses.length > 0 && (
         <div className="text-center">
           <button
-            onClick={() => (window.location.href = "/courses")}
+            onClick={() => navigate("/student/courses")}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             <ExternalLink className="h-5 w-5 mr-2" />

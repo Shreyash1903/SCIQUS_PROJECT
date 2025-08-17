@@ -12,6 +12,8 @@ import {
   Clock,
   Star,
   Award,
+  X,
+  Calendar,
 } from "lucide-react";
 
 const StudentDashboardPage = () => {
@@ -21,6 +23,8 @@ const StudentDashboardPage = () => {
   const [studentProfile, setStudentProfile] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showCourseModal, setShowCourseModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -64,6 +68,188 @@ const StudentDashboardPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewCourseDetails = (course) => {
+    setSelectedCourse(course);
+    setShowCourseModal(true);
+  };
+
+  const closeCourseModal = () => {
+    setSelectedCourse(null);
+    setShowCourseModal(false);
+  };
+
+  // Course Details Modal Component
+  const CourseDetailsModal = ({ course, isOpen, onClose }) => {
+    if (!isOpen || !course) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          {/* Modal Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">{course.course_name}</h2>
+                  <p className="text-blue-100">
+                    Course Code: {course.course_code}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 space-y-6">
+            {/* Course Description */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                Course Description
+              </h3>
+              <div className="text-gray-700 leading-relaxed">
+                {course.description ? (
+                  <div className="space-y-2">
+                    {course.description
+                      .split("●")
+                      .filter((item) => item.trim())
+                      .map((item, index) => (
+                        <div key={index} className="flex items-start">
+                          <span className="text-blue-600 mr-2 mt-1 text-sm">
+                            ●
+                          </span>
+                          <span className="text-sm">{item.trim()}</span>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    No description available for this course.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Course Details */}
+            <div className="space-y-4">
+              {/* Course Information */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  Course Information
+                </h4>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">
+                      Credits:
+                    </span>
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="font-semibold">
+                        {course.credits || 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">
+                      Duration:
+                    </span>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-blue-500 mr-1" />
+                      <span className="font-semibold">
+                        {course.course_duration
+                          ? `${course.course_duration} months`
+                          : "1 semester"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">
+                      Status:
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        course.is_active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                          course.is_active ? "bg-green-400" : "bg-red-400"
+                        }`}
+                      ></div>
+                      {course.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+
+                  {course.max_students && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-500">
+                        Max Students:
+                      </span>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 text-purple-500 mr-1" />
+                        <span className="font-semibold">
+                          {course.max_students}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Enrollment Status */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                <div>
+                  <h4 className="font-semibold text-green-800">
+                    Enrollment Status
+                  </h4>
+                  <p className="text-sm text-green-700">
+                    You are currently enrolled in this course.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate("/student/my-courses");
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View All My Courses
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -207,7 +393,7 @@ const StudentDashboardPage = () => {
             </h3>
             {enrolledCourses.length > 0 && (
               <button
-                onClick={() => navigate("/courses")}
+                onClick={() => navigate("/student/courses")}
                 className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
               >
                 View All Courses →
@@ -226,7 +412,7 @@ const StudentDashboardPage = () => {
                 Start your learning journey by enrolling in available courses
               </p>
               <button
-                onClick={() => navigate("/courses")}
+                onClick={() => navigate("/student/courses")}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
               >
                 <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
@@ -304,7 +490,7 @@ const StudentDashboardPage = () => {
                       </span>
                     </div>
                     <button
-                      onClick={() => navigate("/courses")}
+                      onClick={() => handleViewCourseDetails(course)}
                       className="text-xs text-green-600 hover:text-green-800 font-medium whitespace-nowrap"
                     >
                       View Details →
@@ -363,6 +549,13 @@ const StudentDashboardPage = () => {
           )}
         </div>
       </div>
+
+      {/* Course Details Modal */}
+      <CourseDetailsModal
+        course={selectedCourse}
+        isOpen={showCourseModal}
+        onClose={closeCourseModal}
+      />
     </div>
   );
 };

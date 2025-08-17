@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 
 // Auth Pages
+import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
@@ -38,8 +39,115 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
+            <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/courses"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminCoursesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/students"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminStudentsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/enrolled-students"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminEnrolledStudentsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/profile"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Student Routes */}
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <StudentDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/courses"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <StudentCoursesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <StudentProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/my-courses"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <StudentEnrolledCoursesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all other protected routes */}
             <Route
               path="/*"
               element={
@@ -47,67 +155,8 @@ function App() {
                   <Layout>
                     <Routes>
                       <Route
-                        path="/"
+                        path="/*"
                         element={<Navigate to="/dashboard" replace />}
-                      />
-                      <Route path="/dashboard" element={<DashboardPage />} />
-
-                      {/* Admin Routes */}
-                      <Route
-                        path="/admin/dashboard"
-                        element={<AdminDashboardPage />}
-                      />
-                      <Route
-                        path="/admin/courses"
-                        element={<AdminCoursesPage />}
-                      />
-                      <Route
-                        path="/admin/students"
-                        element={<AdminStudentsPage />}
-                      />
-                      <Route
-                        path="/admin/enrolled-students"
-                        element={<AdminEnrolledStudentsPage />}
-                      />
-                      <Route
-                        path="/admin/profile"
-                        element={<AdminProfilePage />}
-                      />
-
-                      {/* Student Routes */}
-                      <Route
-                        path="/student/dashboard"
-                        element={<StudentDashboardPage />}
-                      />
-                      <Route
-                        path="/student/courses"
-                        element={<StudentCoursesPage />}
-                      />
-                      <Route
-                        path="/student/profile"
-                        element={<StudentProfilePage />}
-                      />
-                      <Route
-                        path="/student/my-courses"
-                        element={<StudentEnrolledCoursesPage />}
-                      />
-
-                      {/* Legacy Routes - redirect to role-specific routes */}
-                      <Route
-                        path="/courses"
-                        element={<Navigate to="/student/courses" replace />}
-                      />
-                      <Route
-                        path="/students"
-                        element={<Navigate to="/admin/students" replace />}
-                      />
-                      <Route
-                        path="/profile"
-                        element={<Navigate to="/student/profile" replace />}
-                      />
-                      <Route
-                        path="/my-courses"
-                        element={<Navigate to="/student/my-courses" replace />}
                       />
                     </Routes>
                   </Layout>
